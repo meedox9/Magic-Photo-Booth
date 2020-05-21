@@ -3,38 +3,50 @@ import numpy as np
 import time
 import threading
 from tkinter import *
+from PIL import Image
 
 
-def starttheshit():
+def Launch():
+
+    #defining both cascade files
     face_cascade = cv2.CascadeClassifier('face.xml')
     smile_cascade = cv2.CascadeClassifier('haarcascade_smile.xml')
+
+    #text font
     myfont = cv2.FONT_HERSHEY_COMPLEX
 
-
     def Timer():
-        j = 30
-        while j>=10:
+    
+        time = 30 #timer in seconds*10
+        
+        while time >= 10:
             _, canvas = video_capture.read()
 
-            if j%10 == 0:
+            if time%10 == 0:
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(canvas,str(j//10),(250,250), font, 7,(255,255,255),10,cv2.LINE_AA)
-            cv2.imshow('a',canvas)
+                cv2.putText(canvas,str(time//10),(250,250), font, 7,(255,255,255),10,cv2.LINE_AA)
+
+            cv2.imshow('MagicBooth',canvas)
             cv2.waitKey(125)
-            j = j-1
+            time = time-1
+
         else:
             _, canvas = video_capture.read()
-            cv2.imshow('a',canvas)
+            cv2.imshow('MagicBooth',canvas)
             cv2.waitKey(2000)
+            
             # Save the frame
-            cv2.imwrite('C:/*path*/capture.jpg',canvas)
+            cv2.imwrite(r'PATH_TO_SAVE_PICTURE\capture.jpg',canvas)
 
 
 
     def detect(gray, frame):
-        f_count = 0
-        s_count = 0
+
+        f_count = 0 #face count
+        s_count = 0 #smile count
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        #loop to check for faces
         for (x, y, w, h) in faces:
             f_count=f_count+1
             f_count_str = str(f_count)
@@ -43,49 +55,57 @@ def starttheshit():
             roi_gray = gray[y:y + h, x:x + w]
             roi_color = frame[y:y + h, x:x + w]
             smiles = smile_cascade.detectMultiScale(roi_gray, 1.8, 20)
-
+            
+            #loop to check for smile
             for (sx, sy, sw, sh) in smiles:
                 s_count=s_count+1
                 s_count_str = str(s_count)
+                
+                #draws a rectangle and label "smile" around the smile (could be removed)
                 cv2.rectangle(roi_color, (sx, sy), ((sx + sw), (sy + sh)), (0, 255, 0), 2)
                 cv2.putText(frame, 'SMILE'+s_count_str, ((sx + sw), (sy + sh)), myfont, 1, (0,0,255), 2, cv2.LINE_8 )
+                
+                #starts timer
                 Timer()
+                
+                #opens the picture captured to view
+                im = Image.open(r'PATH_TO_SAVE_PICTURE\capture.jpg')
+                im.show()                 
+  
+# This method will show image in any image viewer  
+
                 break
+            
         return frame
 
 
+#setting video capture to be live camera 
+video_capture = cv2.VideoCapture(0)
 
-    video_capture = cv2.VideoCapture(0)
-    while True:
-        _, frame = video_capture.read()
-        k = cv2.waitKey(125)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#loop to capture the frames
+while True:
+    _, frame = video_capture.read()
+    k = cv2.waitKey(125)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        canvas = detect(gray, frame)
+    canvas = detect(gray, frame)
 
-        cv2.imshow('a',canvas)
+    cv2.imshow('MagicBooth',canvas)
 
-        if k == 27:
-            break
+    if k == 27:
+        break
 
     video_capture.release()
     cv2.destroyAllWindows()
 
+#A simple tkinter gui with a single button to launch the script
+Window = Tk()
+Window.geometry('250x50')
+Window.title('Magic Camera')
+Window.configure(bg='grey')
+Window.resizable(0, 0)
 
-root = Tk()
-root.geometry('550x290')
-root.title('Magic Camera')
-root.configure(bg='grey')
-root.resizable(0, 0)
+Launch_bt = Button(Window, text='Launch', bg='white', fg='black', command=Launch,  height = 2, width = 5)
+Launch_bt.pack()
 
-fp = Button(root, text='START', bg='white', fg='black', command=starttheshit,  height = 5, width = 10)
-fp.pack()
-root.mainloop()
-# s = float(k)
-
-# for cast in (int, float):
-#     k = cast(e_interest.get())
-#     break
-#
-#
-# s = float(k)
+Window.mainloop()
